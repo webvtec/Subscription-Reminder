@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Payment & Call Tracker</title>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+</head>
+<body>
+  <h1>Subscribers</h1>
+  <input id="name" placeholder="Name">
+  <input id="phone" placeholder="Phone">
+  <input id="amount" placeholder="Amount">
+  <input id="start" type="date">
+  <button onclick="addSubscriber()">Add Subscriber</button>
+
+  <h1>Calls</h1>
+  <input id="cname" placeholder="Name">
+  <input id="cphone" placeholder="Phone">
+  <input id="reason" placeholder="Reason">
+  <input id="calltime" type="datetime-local">
+  <button onclick="addCall()">Add Call</button>
+
+  <h2>Subscribers List</h2>
+  <ul id="subsList"></ul>
+
+  <h2>Calls List</h2>
+  <ul id="callsList"></ul>
+
+  <script>
+    // 🔥 Firebase Config (replace with your details from Firebase console)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      projectId: "YOUR_PROJECT",
+    };
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function addSubscriber() {
+      db.collection("subscribers").add({
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        amount: parseFloat(document.getElementById("amount").value),
+        startDate: document.getElementById("start").value,
+      });
+    }
+
+    function addCall() {
+      db.collection("calls").add({
+        name: document.getElementById("cname").value,
+        phone: document.getElementById("cphone").value,
+        reason: document.getElementById("reason").value,
+        callTime: document.getElementById("calltime").value,
+      });
+    }
+
+    // Show live data
+    db.collection("subscribers").onSnapshot(snapshot => {
+      const list = document.getElementById("subsList");
+      list.innerHTML = "";
+      snapshot.forEach(doc => {
+        const s = doc.data();
+        list.innerHTML += `<li>${s.name} — $${s.amount} (Start: ${s.startDate})</li>`;
+      });
+    });
+
+    db.collection("calls").onSnapshot(snapshot => {
+      const list = document.getElementById("callsList");
+      list.innerHTML = "";
+      snapshot.forEach(doc => {
+        const c = doc.data();
+        list.innerHTML += `<li>${c.name} — ${c.phone} (${c.reason}) at ${c.callTime}</li>`;
+      });
+    });
+  </script>
+</body>
+</html>
