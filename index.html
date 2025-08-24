@@ -7,83 +7,21 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #f7f9fc;
-      color: #333;
-    }
-    header {
-      background: #1e293b;
-      color: white;
-      padding: 1rem;
-      text-align: center;
-      font-size: 1.5rem;
-    }
-    nav {
-      display: flex;
-      justify-content: center;
-      background: #334155;
-    }
-    nav button {
-      background: none;
-      border: none;
-      color: white;
-      padding: 1rem;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    nav button.active {
-      background: #475569;
-    }
-    .container {
-      padding: 2rem;
-      max-width: 900px;
-      margin: auto;
-    }
-    .card {
-      background: white;
-      padding: 1.5rem;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      margin-bottom: 2rem;
-    }
-    h2 {
-      margin-top: 0;
-    }
-    input, button {
-      padding: 0.6rem;
-      margin: 0.3rem 0;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      width: 100%;
-    }
-    button {
-      background: #2563eb;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: #1e40af;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 1rem;
-    }
-    table th, table td {
-      padding: 0.75rem;
-      border: 1px solid #e5e7eb;
-      text-align: left;
-    }
-    table th {
-      background: #f1f5f9;
-    }
-    .hidden {
-      display: none;
-    }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f7f9fc; color: #333; }
+    header { background: #1e293b; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
+    nav { display: flex; justify-content: center; background: #334155; }
+    nav button { background: none; border: none; color: white; padding: 1rem; font-size: 1rem; cursor: pointer; }
+    nav button.active { background: #475569; }
+    .container { padding: 2rem; max-width: 900px; margin: auto; }
+    .card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    h2 { margin-top: 0; }
+    input, select, button { padding: 0.6rem; margin: 0.3rem 0; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
+    button { background: #2563eb; color: white; border: none; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1e40af; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    table th, table td { padding: 0.75rem; border: 1px solid #e5e7eb; text-align: left; }
+    table th { background: #f1f5f9; }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -102,6 +40,13 @@
         <input id="phone" placeholder="Phone">
         <input id="amount" placeholder="Amount">
         <input id="start" type="date">
+        <select id="frequency">
+          <option value="1">Every Month</option>
+          <option value="2">Every 2 Months</option>
+          <option value="3">Every 3 Months</option>
+          <option value="6">Every 6 Months</option>
+          <option value="12">Every Year</option>
+        </select>
         <button onclick="addSubscriber()">Add Subscriber</button>
       </div>
 
@@ -114,6 +59,7 @@
               <th>Phone</th>
               <th>Amount</th>
               <th>Start Date</th>
+              <th>Frequency</th>
             </tr>
           </thead>
           <tbody id="subsList"></tbody>
@@ -164,7 +110,6 @@
       document.getElementById("subs").classList.add("hidden");
       document.getElementById("calls").classList.add("hidden");
       document.getElementById(tab).classList.remove("hidden");
-
       document.getElementById("tab-subs").classList.remove("active");
       document.getElementById("tab-calls").classList.remove("active");
       document.getElementById("tab-" + tab).classList.add("active");
@@ -177,11 +122,13 @@
         phone: document.getElementById("phone").value,
         amount: parseFloat(document.getElementById("amount").value),
         startDate: document.getElementById("start").value,
+        frequency: parseInt(document.getElementById("frequency").value), // in months
       });
       document.getElementById("name").value = "";
       document.getElementById("phone").value = "";
       document.getElementById("amount").value = "";
       document.getElementById("start").value = "";
+      document.getElementById("frequency").value = "1";
     }
 
     // Add Call
@@ -209,6 +156,7 @@
           <td>${s.phone}</td>
           <td>$${s.amount}</td>
           <td>${s.startDate}</td>
+          <td>Every ${s.frequency} month(s)</td>
         </tr>`;
       });
     });
