@@ -35,8 +35,8 @@ exports.scheduledCheck = functions.pubsub.schedule("every 15 minutes").onRun(asy
 
 async function sendMessage(text) {
   try {
-    await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      chat_id: CHAT_ID,
+    await axios.post(`https://api.telegram.org/bot${7638261664:AAGm0MNVQxN0hlW1bhXBRf-kSRuMgRkCLC8}/sendMessage`, {
+      chat_id: -1002734216867,
       text
     });
   } catch (err) {
