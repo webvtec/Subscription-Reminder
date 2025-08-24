@@ -7,20 +7,29 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; background: #f7f9fc; color: #333; }
+    * { box-sizing: border-box; }
+    body, html { margin: 0; padding: 0; height: 100%; font-family: Arial, sans-serif; background: #f7f9fc; }
     header { background: #1e293b; color: white; padding: 1rem; text-align: center; font-size: 1.5rem; }
     nav { display: flex; justify-content: center; background: #334155; }
-    nav button { background: none; border: none; color: white; padding: 1rem; font-size: 1rem; cursor: pointer; }
+    nav button { flex: 1; background: none; border: none; color: white; padding: 1rem; font-size: 1rem; cursor: pointer; }
     nav button.active { background: #475569; }
-    .container { padding: 2rem; max-width: 900px; margin: auto; }
-    .card { background: white; padding: 1.5rem; border-radius: 10px; box-shadow: 0 2px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-    h2 { margin-top: 0; }
-    input, select, button { padding: 0.6rem; margin: 0.3rem 0; border: 1px solid #ccc; border-radius: 6px; width: 100%; }
+    .container { display: flex; flex-direction: column; height: calc(100% - 120px); padding: 1rem; max-width: 1200px; margin: auto; }
+    .tab { flex: 1; overflow-y: auto; }
+    .card { background: white; padding: 1.5rem; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+    h2 { margin-top: 0; font-size: 1.3rem; }
+    form { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+    input, select, button { padding: 0.8rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; width: 100%; }
     button { background: #2563eb; color: white; border: none; cursor: pointer; transition: background 0.2s; }
     button:hover { background: #1e40af; }
     table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-    table th, table td { padding: 0.75rem; border: 1px solid #e5e7eb; text-align: left; }
+    table th, table td { padding: 0.8rem; border: 1px solid #e5e7eb; text-align: left; }
     table th { background: #f1f5f9; }
+    .action-btn { background: #dc2626; margin-left: 0.5rem; }
+    .action-btn:hover { background: #991b1b; }
+    .missed-btn { background: #f59e0b; }
+    .missed-btn:hover { background: #b45309; }
+    .paid-btn { background: #16a34a; }
+    .paid-btn:hover { background: #14532d; }
     .hidden { display: none; }
   </style>
 </head>
@@ -36,18 +45,20 @@
     <div id="subs" class="tab">
       <div class="card">
         <h2>Add Subscriber</h2>
-        <input id="name" placeholder="Name">
-        <input id="phone" placeholder="Phone">
-        <input id="amount" placeholder="Amount">
-        <input id="start" type="date">
-        <select id="frequency">
-          <option value="1">Every Month</option>
-          <option value="2">Every 2 Months</option>
-          <option value="3">Every 3 Months</option>
-          <option value="6">Every 6 Months</option>
-          <option value="12">Every Year</option>
-        </select>
-        <button onclick="addSubscriber()">Add Subscriber</button>
+        <form id="subscriberForm">
+          <input id="name" placeholder="Full Name" required>
+          <input id="phone" placeholder="Phone Number" required>
+          <input id="amount" type="number" placeholder="Payment Amount" required>
+          <input id="start" type="date" required>
+          <select id="frequency">
+            <option value="1">Every Month</option>
+            <option value="2">Every 2 Months</option>
+            <option value="3">Every 3 Months</option>
+            <option value="6">Every 6 Months</option>
+            <option value="12">Every Year</option>
+          </select>
+          <button type="submit">➕ Add Subscriber</button>
+        </form>
       </div>
 
       <div class="card">
@@ -60,6 +71,8 @@
               <th>Amount</th>
               <th>Start Date</th>
               <th>Frequency</th>
+              <th>Missed</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="subsList"></tbody>
@@ -71,11 +84,13 @@
     <div id="calls" class="tab hidden">
       <div class="card">
         <h2>Add Call Reminder</h2>
-        <input id="cname" placeholder="Name">
-        <input id="cphone" placeholder="Phone">
-        <input id="reason" placeholder="Reason">
-        <input id="calltime" type="datetime-local">
-        <button onclick="addCall()">Add Call</button>
+        <form id="callForm">
+          <input id="cname" placeholder="Full Name" required>
+          <input id="cphone" placeholder="Phone Number" required>
+          <input id="reason" placeholder="Reason for Call" required>
+          <input id="calltime" type="datetime-local" required>
+          <button type="submit">📞 Add Call Reminder</button>
+        </form>
       </div>
 
       <div class="card">
@@ -87,6 +102,7 @@
               <th>Phone</th>
               <th>Reason</th>
               <th>Call Time</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="callsList"></tbody>
@@ -96,7 +112,7 @@
   </div>
 
   <script>
-    // 🔥 Firebase Config (replace with your project details)
+    // 🔥 Firebase Config (replace with your real Firebase config!)
     const firebaseConfig = {
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_PROJECT.firebaseapp.com",
@@ -116,34 +132,30 @@
     }
 
     // Add Subscriber
-    function addSubscriber() {
-      db.collection("subscribers").add({
+    document.getElementById("subscriberForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await db.collection("subscribers").add({
         name: document.getElementById("name").value,
         phone: document.getElementById("phone").value,
         amount: parseFloat(document.getElementById("amount").value),
         startDate: document.getElementById("start").value,
-        frequency: parseInt(document.getElementById("frequency").value), // in months
+        frequency: parseInt(document.getElementById("frequency").value),
+        missed: 0,
       });
-      document.getElementById("name").value = "";
-      document.getElementById("phone").value = "";
-      document.getElementById("amount").value = "";
-      document.getElementById("start").value = "";
-      document.getElementById("frequency").value = "1";
-    }
+      e.target.reset();
+    });
 
     // Add Call
-    function addCall() {
-      db.collection("calls").add({
+    document.getElementById("callForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      await db.collection("calls").add({
         name: document.getElementById("cname").value,
         phone: document.getElementById("cphone").value,
         reason: document.getElementById("reason").value,
         callTime: document.getElementById("calltime").value,
       });
-      document.getElementById("cname").value = "";
-      document.getElementById("cphone").value = "";
-      document.getElementById("reason").value = "";
-      document.getElementById("calltime").value = "";
-    }
+      e.target.reset();
+    });
 
     // Display Subscribers
     db.collection("subscribers").onSnapshot(snapshot => {
@@ -157,6 +169,12 @@
           <td>$${s.amount}</td>
           <td>${s.startDate}</td>
           <td>Every ${s.frequency} month(s)</td>
+          <td>${s.missed || 0}</td>
+          <td>
+            <button class="missed-btn" onclick="addMissed('${doc.id}', ${s.missed || 0})">➕ Missed</button>
+            <button class="paid-btn" onclick="markPaid('${doc.id}')">✅ Paid</button>
+            <button class="action-btn" onclick="deleteSubscriber('${doc.id}')">🗑 Remove</button>
+          </td>
         </tr>`;
       });
     });
@@ -172,9 +190,31 @@
           <td>${c.phone}</td>
           <td>${c.reason}</td>
           <td>${c.callTime}</td>
+          <td><button class="action-btn" onclick="deleteCall('${doc.id}')">🗑 Remove</button></td>
         </tr>`;
       });
     });
+
+    // 🔧 Actions
+    async function deleteSubscriber(id) {
+      await db.collection("subscribers").doc(id).delete();
+    }
+
+    async function deleteCall(id) {
+      await db.collection("calls").doc(id).delete();
+    }
+
+    async function addMissed(id, current) {
+      await db.collection("subscribers").doc(id).update({
+        missed: current + 1
+      });
+    }
+
+    async function markPaid(id) {
+      await db.collection("subscribers").doc(id).update({
+        missed: 0
+      });
+    }
   </script>
 </body>
 </html>
